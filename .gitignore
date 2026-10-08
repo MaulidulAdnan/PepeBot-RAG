@@ -1,0 +1,22 @@
+# ------------------
+# Laravel & React
+# ------------------
+/core-service/vendor/
+/core-service/node_modules/
+/core-service/public/build/
+/core-service/.env
+
+# ------------------
+# Python & FastAPI
+# ------------------
+/ai-service/venv/
+/ai-service/__pycache__/
+/ai-service/.env
+*.pyc
+
+# ------------------
+# OS Files
+# ------------------
+.DS_Store
+
+.env

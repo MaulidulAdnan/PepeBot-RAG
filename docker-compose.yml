@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  # Database Utama (Relational + Vector untuk RAG)
+  postgres-db:
+    image: ankane/pgvector:latest
+    container_name: pepebot_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
