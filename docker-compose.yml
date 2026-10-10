@@ -1,19 +1,48 @@
 version: '3.8'
 
 services:
-  # Database Utama (Relational + Vector untuk RAG)
   postgres-db:
+    # Mengunci versi Postgres 15 dan pgvector 0.5.1 sesuai tes lokal Anda
     image: ankane/pgvector:latest
     container_name: pepebot_postgres
     restart: always
     environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE:-pepebot_db}
+      POSTGRES_USER: ${DB_USERNAME:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secretpassword}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  core-service:
+    build:
+      context: ./core-service
+    container_name: pepebot_core
+    restart: unless-stopped
+    ports:
+      - "8000:8000"   # Port website Laravel
+      - "5173:5173"   # Port HMR React/Vite
+    volumes:
+      - ./core-service:/app   # Sinkronisasi kode live editing
+    environment:
+      - DB_HOST=postgres-db
+    depends_on:
+      - postgres-db
+
+  ai-service:
+    build:
+      context: ./ai-service
+    container_name: pepebot_ai
+    restart: unless-stopped
+    ports:
+      - "8001:8001"   # Port API FastAPI
+    volumes:
+      - ./ai-service:/app     # Sinkronisasi kode live editing
+    environment:
+      - DATABASE_URL=postgresql://${DB_USERNAME:-admin}:${DB_PASSWORD:-secretpassword}@postgres-db:5432/${DB_DATABASE:-pepebot_db}
+    depends_on:
+      - postgres-db
 
 volumes:
   pgdata:
