@@ -1,34 +1,19 @@
-import os
-import re
-from dotenv import load_dotenv
-from pathlib import Path
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_HERE = Path(__file__).resolve()
-# Muat .env root dulu sebagai sumber DB_USERNAME/DB_PASSWORD/DB_DATABASE,
-# lalu .env ai-service (menang) agar ${VAR:-default} terinterpolasi benar
-# baik saat jalan native Windows maupun di dalam Docker.
-load_dotenv(_HERE.parents[3] / ".env", override=False)
-load_dotenv(_HERE.parents[2] / ".env", override=True)
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    INTERNAL_API_KEY: str
+    GEMINI_API_KEY: str
+    EMBEDDING_MODEL: str = "gemini-embedding-001"
+    EMBEDDING_DIM: int = 768
+    LLM_MODEL: str = "gemini-3.5-flash-lite"
+    RETRIEVAL_THRESHOLD: float = 0.65
+    TOP_K: int = 4
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
-def _require(name: str) -> str:
-    value = os.getenv(name)
-    if not value or "${" in value:
-        value = _expand(value or "")
-    if not value:
-        raise RuntimeError(f"Environment variable {name} wajib diisi")
-    return value
-
-
-def _expand(value: str) -> str:
-    # Dukung ${VAR}, $VAR, dan ${VAR:-default} (tidak didukung os.path.expandvars).
-    def repl(m: re.Match) -> str:
-        var, default = m.group(1), m.group(2)
-        return os.getenv(var, default if default is not None else "")
-
-    value = re.sub(r"\$\{([^}:]+)(?::-(.*?))?\}", repl, value)
-    return os.path.expandvars(value)
-
-
-DATABASE_URL = _require("DATABASE_URL")
-GEMINI_API_KEY = _require("GEMINI_API_KEY")
+settings = Settings() # type: ignore
