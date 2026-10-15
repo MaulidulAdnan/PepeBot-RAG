@@ -1,19 +1,22 @@
-version: '3.8'
-
 services:
   postgres-db:
-    # Mengunci versi Postgres 15 dan pgvector 0.5.1 sesuai tes lokal Anda
-    image: ankane/pgvector:latest
+    image: pgvector/pgvector:pg15
     container_name: pepebot_postgres
     restart: always
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-pepebot_db}
-      POSTGRES_USER: ${DB_USERNAME:-admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secretpassword}
+      POSTGRES_DB: ${DB_DATABASE:?isi DB_DATABASE di .env}
+      POSTGRES_USER: ${DB_USERNAME:?isi DB_USERNAME di .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?isi DB_PASSWORD di .env}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   core-service:
     build:
@@ -21,14 +24,16 @@ services:
     container_name: pepebot_core
     restart: unless-stopped
     ports:
-      - "8000:8000"   # Port website Laravel
-      - "5173:5173"   # Port HMR React/Vite
+      - "8000:8000"
+      - "5173:5173"
     volumes:
-      - ./core-service:/app   # Sinkronisasi kode live editing
+      - ./core-service:/app
     environment:
       - DB_HOST=postgres-db
+      - AI_SERVICE_URL=http://ai-service:8001
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
 
   ai-service:
     build:
@@ -36,13 +41,17 @@ services:
     container_name: pepebot_ai
     restart: unless-stopped
     ports:
-      - "8001:8001"   # Port API FastAPI
-    volumes:
-      - ./ai-service:/app     # Sinkronisasi kode live editing
+      - "127.0.0.1:8001:8001"
+    env_file:
+      - ./ai-service/.env
     environment:
-      - DATABASE_URL=postgresql://${DB_USERNAME:-admin}:${DB_PASSWORD:-secretpassword}@postgres-db:5432/${DB_DATABASE:-pepebot_db}
+      DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@postgres-db:5432/${DB_DATABASE}
+    volumes:
+      - ./ai-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
 
 volumes:
   pgdata:
