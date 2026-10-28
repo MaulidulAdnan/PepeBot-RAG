@@ -698,7 +698,7 @@ Catatan supaya tidak terlewat: skrip `_tmp_probe_fase63.php` **dihapus** setelah
 
 | Fase | Status |
 |---|---|
-| 6.1 Konfigurasi environment | ✅ Selesai |
+| 6.1 Konfigurasi environment | ✅ Selesai | oke
 | 6.2 Jalur webhook di level rute | ✅ Selesai |
 | 6.3 Logika webhook | ✅ Selesai — dokumen ini |
 | 6.4 Ngrok | 🔜 Berikutnya |
