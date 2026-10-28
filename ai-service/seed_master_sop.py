@@ -1,16 +1,12 @@
 """Seeder data master SOP Desa Pepe (strategi: seed via kode sebelum Dashboard).
 
-Memakai fungsi internal yang sama persis dengan endpoint POST /documents
+Memakai fungsi internal yang sama persis dengan endpoint POST /api/documents
 (upsert per sop_name+varian + re-embedding sinkron + versioning).
 Jalankan dari folder ai-service:  py seed_master_sop.py
 Idempoten: aman diulang (upsert menaikkan version, bukan duplikat).
 """
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.core.db import Base, _with_host, _with_driver
-from app.core.config import DATABASE_URL
+from app.core.db import SessionLocal
 from app.models import document_vector  # noqa: F401 (daftarkan tabel)
 from app.api.endpoints.document import DocumentUpsert, upsert_document
 
@@ -140,9 +136,9 @@ MASTER = [
 
 
 def main() -> None:
-    engine = create_engine(_with_host(_with_driver(DATABASE_URL)))
-    Session = sessionmaker(bind=engine)
-    db = Session()
+    # Memakai engine/session yang sama dengan aplikasi (app.core.db) agar
+    # konfigurasi koneksi hanya ada di satu tempat.
+    db = SessionLocal()
     try:
         for i, (sop, varian, syarat, kanal, note) in enumerate(MASTER, 1):
             res = upsert_document(DocumentUpsert(

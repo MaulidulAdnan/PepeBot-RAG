@@ -4,9 +4,10 @@ from app.services.rag_engine import RetrievedChunk
 
 LLM_MODEL = settings.LLM_MODEL
 
-# Kontak darurat jika data tidak ditemukan (nanti bisa dipindah ke setting Laravel jika mau)
-FALLBACK_WA = "081234567890" # Ganti dengan nomor petugas desa
-FALLBACK_URL = "https://pepe.desa.id"
+# Kontak darurat jika data tidak ditemukan. Default ada di config.py; isi
+# DESA_PETUGAS_WA / DESA_PETUGAS_URL di environment bila ingin menimpanya.
+FALLBACK_WA = settings.DESA_PETUGAS_WA
+FALLBACK_URL = settings.DESA_PETUGAS_URL
 
 REFUSAL_MARKER = "TIDAK_ADA_DI_SOP"
 
